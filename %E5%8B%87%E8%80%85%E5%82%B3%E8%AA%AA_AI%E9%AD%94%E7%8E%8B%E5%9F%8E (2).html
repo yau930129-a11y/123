@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>勇者傳說：AI 魔王城</title>
+<style>
+:root{--ink:#f8f4e8;--muted:#b9c7d8;--gold:#ffd166;--red:#ff5c70;--green:#6ee7a8;--panel:#111a36;--line:#35466e}
+*{box-sizing:border-box} body{margin:0;color:var(--ink);font-family:system-ui,"Noto Sans TC",sans-serif;background:#080e22}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:12px 16px;font-weight:800;transition:.15s}
+button:focus-visible{outline:3px solid white;outline-offset:3px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.wrap{max-width:1100px;margin:auto;padding:22px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.kicker{color:var(--gold);letter-spacing:.18em;font-size:.78rem;font-weight:900}
+h1{margin:4px 0;font-size:clamp(1.7rem,4vw,2.8rem);line-height:1.1}
+.subtitle{color:var(--muted);margin:8px 0 20px}
+.pill{border:1px solid var(--line);border-radius:99px;padding:8px 12px;color:#dbeafe;background:#121b38;font-size:.85rem}
+.game{border:1px solid #30416c;border-radius:22px;overflow:hidden;background:#101833;box-shadow:0 20px 70px #0008}
+.scene{height:240px;position:relative;overflow:hidden;background:linear-gradient(#182c5a 0%,#5a4e83 68%,#d08b73 100%)}
+.moon{position:absolute;width:70px;height:70px;border-radius:50%;background:#ffe9a8;right:13%;top:25px;box-shadow:0 0 35px #ffe9a866}
+.mountain{position:absolute;bottom:0;width:0;height:0;border-left:210px solid transparent;border-right:210px solid transparent;border-bottom:150px solid #29345c}
+.m1{left:2%}.m2{left:31%;border-bottom-color:#202b4e;border-left-width:260px;border-right-width:260px;border-bottom-width:190px}
+.castle{position:absolute;right:8%;bottom:42px;font-size:76px;filter:drop-shadow(0 5px 3px #10132c)}
+.ground{position:absolute;bottom:0;height:35px;width:100%;background:repeating-linear-gradient(90deg,#2e704d 0 34px,#367e53 34px 68px)}
+.hero,.foe{position:absolute;bottom:27px;font-size:58px;filter:drop-shadow(0 5px 2px #1117);transition:transform .3s}
+.hero{left:16%}.foe{right:28%}.hero.attack{transform:translateX(95px) rotate(-12deg)}.foe.hit{transform:translateX(25px) rotate(18deg);opacity:.35}.foe.attack{transform:translateX(-30px) scale(1.1)}
+.scene-label{position:absolute;left:18px;top:14px;background:#111a36c9;padding:8px 12px;border-radius:10px;font-weight:800}
+.hud{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 18px;background:#0c142c}
+.stat{background:#151f3d;border:1px solid #2d3d65;border-radius:14px;padding:12px}
+.stat-top{display:flex;justify-content:space-between;gap:8px;font-weight:800;font-size:.92rem}
+.bar{height:12px;border-radius:99px;background:#303a55;overflow:hidden;margin-top:9px}
+.fill{height:100%;width:100%;background:linear-gradient(90deg,#42d392,#a2f6a8);transition:width .35s}
+.fill.enemy{background:linear-gradient(90deg,#ff526d,#ffad70)}
+.content{padding:20px;display:grid;grid-template-columns:1.3fr .7fr;gap:18px}
+.question-card,.side-card{border:1px solid var(--line);background:#141e3b;border-radius:16px;padding:18px}
+.progress{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:.9rem;gap:10px}
+.progressbar{height:5px;background:#303a55;border-radius:9px;margin:10px 0 18px;overflow:hidden}.progressbar div{height:100%;background:var(--gold);width:0;transition:width .3s}
+h2{font-size:1.2rem;margin:10px 0 18px;line-height:1.55}
+.answers{display:grid;gap:10px}
+.answer{width:100%;text-align:left;color:var(--ink);background:#202c50;border:1px solid #3a4b76;display:flex;gap:12px;align-items:center}
+.answer:hover:not(:disabled){background:#2b3b67;transform:translateY(-1px)}
+.letter{width:30px;height:30px;display:grid;place-items:center;border-radius:8px;background:#111a36;color:var(--gold);flex-shrink:0}
+.answer.correct{border-color:var(--green);background:#123c39}.answer.wrong{border-color:var(--red);background:#4a2339}
+.feedback{min-height:54px;margin-top:14px;padding:12px;border-radius:10px;background:#0c142c;color:#dce7ff;line-height:1.5}
+.feedback.good{color:#a6f5c5}.feedback.bad{color:#ffb2bd}
+.nextrow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.primary{background:var(--gold);color:#251b29}.secondary{background:#27385f;color:#f5f7ff;border:1px solid #435680}
+.side-card h3{margin:0 0 12px}.rule{color:#c1cde2;line-height:1.65;font-size:.93rem}.score{font-size:2rem;color:var(--gold);font-weight:900}.lognote{font-size:.83rem;color:#9eafcb;line-height:1.5}
+.footer{padding:0 20px 20px;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.overlay{position:fixed;inset:0;background:#050917eF;display:none;place-items:center;padding:20px;z-index:5}.overlay.show{display:grid}
+.modal{max-width:560px;width:100%;background:#141e3b;border:1px solid #51648f;border-radius:22px;padding:28px;text-align:center;box-shadow:0 20px 90px #0009}
+.bigemoji{font-size:4rem}.modal h2{font-size:2rem;margin:6px 0}.modal p{color:#c5d2e8;line-height:1.6}
+.modal-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.shake{animation:shake .25s}
+@media(max-width:720px){.content{grid-template-columns:1fr}.scene{height:205px}.hero{left:8%}.foe{right:23%}.castle{right:2%;font-size:58px}.hud{padding:10px;gap:8px}.stat{padding:10px}.wrap{padding:12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><div class="kicker">PIXEL QUEST · AI CERTIFICATION</div><h1>勇者傳說：AI 魔王城</h1></div><div class="pill">10 道知識挑戰 · 答對攻擊／答錯受擊</div></header>
+<p class="subtitle">穿越怪物森林，擊敗魔王，救出被囚禁的公主！每一題都是一場戰鬥。</p>
+<div class="game">
+  <div class="scene" id="scene">
+    <div class="moon"></div><div class="mountain m1"></div><div class="mountain m2"></div>
+    <div class="castle" id="castle">🏰</div><div class="ground"></div>
+    <div class="scene-label" id="stageLabel">第一章・怪物森林</div>
+    <div class="hero" id="hero">🛡️🧙</div><div class="foe" id="foe">👾</div>
+  </div>
+  <div class="hud">
+    <div class="stat"><div class="stat-top"><span>🧙 勇者 HP</span><span id="playerHpText">100 / 100</span></div><div class="bar"><div class="fill" id="playerBar"></div></div></div>
+    <div class="stat"><div class="stat-top"><span id="enemyName">👾 森林怪物 HP</span><span id="enemyHpText">30 / 30</span></div><div class="bar"><div class="fill enemy" id="enemyBar"></div></div></div>
+  </div>
+  <div class="content">
+    <section class="question-card">
+      <div class="progress"><span id="questionNumber">第 1 / 10 題</span><span id="scoreText">目前得分：0</span></div>
+      <div class="progressbar"><div id="progressFill"></div></div>
+      <div class="kicker" id="topic">AI 基礎知識</div>
+      <h2 id="question">準備好開始冒險了嗎？</h2>
+      <div class="answers" id="answers"></div>
+      <div class="feedback" id="feedback">答對即可對敵人造成傷害；答錯會受到敵人反擊。勇者 HP 歸零即挑戰失敗。</div>
+      <div class="nextrow"><span class="lognote" id="hint">每題限答一次，請仔細選擇。</span><button class="primary" id="nextBtn" disabled>下一關 →</button></div>
+    </section>
+    <aside class="side-card">
+      <h3>📜 冒險指南</h3>
+      <div class="rule">⚔️ 答對：勇者發動攻擊，獲得 <b>100 分</b>，敵人扣血。<br>💥 答錯：敵人反擊，勇者扣 <b>20 HP</b>。<br>👑 第 10 題將面對魔王，魔王 HP 為 50。<br>🏆 完成全部題目且勇者仍有 HP，即可成功救出公主。</div>
+      <hr style="border:0;border-top:1px solid #35466e;margin:18px 0">
+      <div class="kicker">冒險分數</div><div class="score" id="bigScore">0</div>
+      <p class="lognote">遊玩紀錄會依照你提供的 Excel「GameLog」欄位建立，可下載 CSV 後以 Excel 開啟。</p>
+      <button class="secondary" id="downloadBtn" style="width:100%">⬇ 匯出遊玩紀錄 CSV</button>
+    </aside>
+  </div>
+  <div class="footer"><span class="lognote">題目來源：你提供的《最新人工智慧概論－AIL 國際認證 Specialist 選擇題》</span><button class="secondary" id="restartBtn">重新開始 ↻</button></div>
+</div>
+</div>
+<div class="overlay" id="overlay"><div class="modal"><div class="bigemoji" id="endingEmoji">👑</div><div class="kicker">QUEST COMPLETE</div><h2 id="endingTitle">冒險結束</h2><p id="endingText"></p><div class="score" id="endingScore">0 分</div><p id="endingDetail"></p><div class="modal-actions"><button class="primary" id="endingDownload">匯出遊玩紀錄 CSV</button><button class="secondary" id="playAgain">再玩一次</button></div></div></div>
+<script>
+const questions = [
+ {id:1,src:1,topic:"智慧製造",q:"智慧製造中，「標準化作業」的英文簡稱為什麼？",opts:["SOP","AGV","CPS","Internet"],a:0,why:"SOP 是標準化作業的英文簡稱。"},
+ {id:2,src:3,topic:"機器學習",q:"機器學習有三種主要類型：監督學習、非監督學習和哪一種學習？",opts:["自主學習","優化學習","重複學習","強化學習"],a:3,why:"題庫列出的第三種類型是強化學習。"},
+ {id:3,src:5,topic:"智慧家居",q:"「智能家居」的英文是什麼？",opts:["Internet home","Internet house","smart stay","smart home"],a:3,why:"Smart home 是智能家居的英文。"},
+ {id:4,src:8,topic:"人工神經網路",q:"人工神經網路（ANN）中，扮演生物神經模型「突觸」角色、用來調節神經元影響程度的是什麼？",opts:["權重","輸出通道","輸入通道","細胞體"],a:0,why:"權重用來調節一個神經元對另一個神經元的影響程度。"},
+ {id:5,src:9,topic:"自動駕駛",q:"依照 SAE International 定義的自動駕駛六級，「完全自動駕駛」是第幾級？",opts:["等級 0（Level 0）","等級 4（Level 4）","等級 5（Level 5）","等級 1（Level 1）"],a:2,why:"依照這份題庫，完全自動駕駛是等級 5。"},
+ {id:6,src:10,topic:"強化學習",q:"強化學習使用機器的個別歷史和經驗來做出決定，其經典應用是什麼？",opts:["文字處理","遊戲娛樂","資料採擷","自動控制"],a:1,why:"題庫中的答案是遊戲娛樂。"},
+ {id:7,src:12,topic:"機器學習",q:"哪一項是人工智慧的核心技術之一，也是使計算機具有智慧的根本途徑？",opts:["強化學習","機器學習","推薦引擎","搜尋引擎"],a:1,why:"題庫指出這項技術是機器學習。"},
+ {id:8,src:25,topic:"物聯網",q:"智慧家居透過哪一種技術將家中的多種設備連接在一起？",opts:["社交網","物聯網","內聯網","互聯網"],a:1,why:"題庫中的答案是物聯網（IoT）。"},
+ {id:9,src:34,topic:"模型訓練",q:"建立機器學習模型時，通常用多少比例的已知歷史資料作為訓練資料？",opts:["20%–30%","70%–80%","50%","任意比例"],a:1,why:"題庫建議以 70%–80% 作為訓練資料，其餘作為測試資料。"},
+ {id:10,src:50,topic:"魔王決戰・AI 基礎",q:"人工智慧的英文縮寫是什麼？",opts:["BI","APP","DI","AI"],a:3,why:"AI 是 Artificial Intelligence（人工智慧）的英文縮寫。"}
+];
+const columns=["ReceivedAt","EventID","SessionID","PlayerID","Sequence","EventType","GameVersion","Round","QuestionID","SourcePage","SourceQuestionNo","SelectedOption","CorrectOption","IsCorrect","ResponseMs","ElapsedMs","PlayerHP","BossHP","DamageToPlayer","DamageToBoss","Score","CorrectCount","Ending","RequestHash","ResponseJSON"];
+let state,logs=[],startAt=0,questionAt=0,answered=false,sessionId="",playerId="";
+const $=id=>document.getElementById(id);
+function uuid(){return (crypto&&crypto.randomUUID)?crypto.randomUUID():"id-"+Date.now()+"-"+Math.random().toString(16).slice(2)}
+function fresh(){
+ state={hp:100,score:0,correct:0,enemyHp:30,enemyMax:30,damagePlayer:0,damageEnemy:0,ending:"",selected:null};
+ logs=[];questionAt=0;answered=false;startAt=Date.now();sessionId=uuid();playerId="Player-"+sessionId.slice(0,8);
+ logEvent("game_start",null,null,null,0,0);
+ $("overlay").classList.remove("show");renderQuestion();renderHud();
+ $("feedback").className="feedback";$("feedback").textContent="答對即可對敵人造成傷害；答錯會受到敵人反擊。勇者 HP 歸零即挑戰失敗。";
+}
+function currentBoss(){return questionAt===9}
+function enemyLabel(){return currentBoss()?"👹 魔王 HP":"👾 森林怪物 HP"}
+function renderHud(){
+ $("playerHpText").textContent=`${state.hp} / 100`;$("playerBar").style.width=Math.max(0,state.hp)+"%";
+ $("enemyHpText").textContent=`${state.enemyHp} / ${state.enemyMax}`;$("enemyBar").style.width=Math.max(0,state.enemyHp/state.enemyMax*100)+"%";
+ $("enemyName").textContent=enemyLabel();$("scoreText").textContent="目前得分："+state.score;$("bigScore").textContent=state.score;
+ $("hero").textContent=state.hp<=30?"🤕🧙":"🛡️🧙";$("foe").textContent=currentBoss()?"👹":"👾";
+ $("stageLabel").textContent=currentBoss()?"最終章・魔王城":"第 "+(Math.floor(questionAt/3)+1)+" 章・"+(["怪物森林","迷霧山谷","古代遺跡"][Math.min(2,Math.floor(questionAt/3))]);
+}
+function renderQuestion(){
+ const q=questions[questionAt];answered=false;state.selected=null;
+ $("questionNumber").textContent=`第 ${questionAt+1} / ${questions.length} 題`;
+ $("progressFill").style.width=(questionAt/questions.length*100)+"%";$("topic").textContent=q.topic;$("question").textContent=q.q;
+ $("answers").innerHTML="";
+ q.opts.forEach((opt,i)=>{let b=document.createElement("button");b.className="answer";b.innerHTML=`<span class="letter">${"ABCD"[i]}</span><span>${opt}</span>`;b.onclick=()=>answer(i,b);$("answers").appendChild(b)});
+ $("nextBtn").disabled=true;$("nextBtn").textContent=questionAt===9?"查看結局 →":"下一關 →";
+ $("hint").textContent=currentBoss()?"最終決戰！答對才能擊敗魔王。":"選擇正確答案，讓勇者發動攻擊。";
+ renderHud();
+}
+function answer(index,button){
+ if(answered)return;answered=true;const q=questions[questionAt],isCorrect=index===q.a,now=Date.now();
+ document.querySelectorAll(".answer").forEach((b,i)=>{b.disabled=true;if(i===q.a)b.classList.add("correct");if(i===index&&!isCorrect)b.classList.add("wrong")});
+ state.selected=index;let dmgP=0,dmgE=0;
+ if(isCorrect){
+   state.score+=100;state.correct++;dmgE=state.enemyHp;state.enemyHp=0;state.damageEnemy+=dmgE;
+   $("hero").classList.add("attack");$("foe").classList.add("hit");
+   $("feedback").className="feedback good";$("feedback").textContent="⚔️ 答對了！勇者發動攻擊，敵人 HP −"+dmgE+"。"+q.why;
+ }else{
+   dmgP=20;state.hp=Math.max(0,state.hp-dmgP);state.damagePlayer+=dmgP;
+   $("foe").classList.add("attack");$("scene").classList.add("shake");
+   $("feedback").className="feedback bad";$("feedback").textContent="💥 答錯了！敵人反擊，勇者 HP −"+dmgP+"。正確答案是 "+("ABCD"[q.a])+"："+q.opts[q.a]+"。"+q.why;
+ }
+ renderHud();$("nextBtn").disabled=false;
+ logEvent("answer",q,index,isCorrect,now-startAt,dmgP,dmgE);
+ setTimeout(()=>{$("hero").classList.remove("attack");$("foe").classList.remove("hit","attack");$("scene").classList.remove("shake")},450);
+ if(state.hp<=0){$("nextBtn").textContent="查看結局 →";$("nextBtn").onclick=finish; }
+}
+function next(){
+ if(!answered)return;
+ if(state.hp<=0){finish();return}
+ if(questionAt===questions.length-1){finish();return}
+ questionAt++;state.enemyMax=currentBoss()?50:30;state.enemyHp=state.enemyMax;
+ renderQuestion();$("feedback").className="feedback";$("feedback").textContent="新敵人出現了！準備迎戰。";
+}
+$("nextBtn").onclick=next;
+function logEvent(type,q,selected,isCorrect,elapsed,dmgP=0,dmgE=0){
+ const timestamp=new Date().toISOString(),seq=logs.length+1;
+ const row={ReceivedAt:timestamp,EventID:uuid(),SessionID:sessionId,PlayerID:playerId,Sequence:seq,EventType:type,GameVersion:"1.0.0",Round:questionAt+1,QuestionID:q?q.id:"",SourcePage:q?"PDF第"+q.src+"題":"",SourceQuestionNo:q?q.src:"",SelectedOption:selected===null||selected===undefined?"":"ABCD"[selected],CorrectOption:q?"ABCD"[q.a]:"",IsCorrect:isCorrect===null||isCorrect===undefined?"":isCorrect,ResponseMs:elapsed===null||elapsed===undefined?"":elapsed,ElapsedMs:Date.now()-startAt,PlayerHP:state?state.hp:"",BossHP:state?state.enemyHp:"",DamageToPlayer:dmgP,DamageToBoss:dmgE,Score:state?state.score:0,CorrectCount:state?state.correct:0,Ending:state&&state.ending?state.ending:"",RequestHash:"",ResponseJSON:JSON.stringify({question:q?q.q:"",selected:selected===null||selected===undefined?null:"ABCD"[selected],correct:isCorrect,playerHP:state?state.hp:null,enemyHP:state?state.enemyHp:null})};
+ logs.push(row);
+}
+function finish(){
+ if(state.ending)return;
+ state.ending=state.hp>0&&questionAt===questions.length-1?"success":"failure";
+ logEvent("game_end",null,null,null,Date.now()-startAt,0,0);
+ $("endingEmoji").textContent=state.ending==="success"?"👑":"💔";
+ $("endingTitle").textContent=state.ending==="success"?"勇者勝利！公主獲救":"挑戰失敗";
+ $("endingText").textContent=state.ending==="success"?"你成功擊敗魔王，救出了公主！王國恢復和平。":"勇者的 HP 已耗盡，這次未能完成拯救公主的任務。重新整理策略，再來挑戰吧！";
+ $("endingScore").textContent=state.score+" 分";
+ $("endingDetail").textContent=`答對 ${state.correct} / 10 題｜剩餘 HP ${state.hp}｜本次紀錄 ${logs.length} 筆`;
+ $("overlay").classList.add("show");
+}
+function downloadCsv(){
+ const esc=v=>{let s=String(v??"");return '"'+s.replace(/"/g,'""')+'"';};
+ const csv="\uFEFF"+[columns.join(","),...logs.map(r=>columns.map(c=>esc(r[c])).join(","))].join("\r\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=`遊玩紀錄_${sessionId||"session"}.csv`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+$("downloadBtn").onclick=downloadCsv;$("endingDownload").onclick=downloadCsv;$("restartBtn").onclick=fresh;$("playAgain").onclick=fresh;
+fresh();
+</script>
+</body>
+</html>
